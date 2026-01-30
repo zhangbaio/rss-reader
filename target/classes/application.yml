@@ -1,0 +1,23 @@
+spring:
+  profiles:
+    active: dev
+  application:
+    name: rss-reader
+
+server:
+  port: 8080
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.rssreader.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
+rss:
+  fetch:
+    enabled: true
+    cron: 0 */30 * * * ?
+    thread-pool-size: 5
+    max-retries: 3
+    timeout: 30000

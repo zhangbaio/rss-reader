@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rssreader.mapper.FeedMapper">
+
+    <resultMap id="BaseResultMap" type="com.rssreader.entity.Feed">
+        <id column="id" property="id"/>
+        <result column="feed_url" property="feedUrl"/>
+        <result column="feed_name" property="feedName"/>
+        <result column="feed_description" property="feedDescription"/>
+        <result column="feed_link" property="feedLink"/>
+        <result column="feed_category" property="feedCategory"/>
+        <result column="feed_language" property="feedLanguage"/>
+        <result column="feed_image_url" property="feedImageUrl"/>
+        <result column="last_fetch_time" property="lastFetchTime"/>
+        <result column="fetch_interval" property="fetchInterval"/>
+        <result column="status" property="status"/>
+        <result column="fetch_error_count" property="fetchErrorCount"/>
+        <result column="last_error_msg" property="lastErrorMsg"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="is_deleted" property="isDeleted"/>
+    </resultMap>
+
+    <resultMap id="VOResultMap" type="com.rssreader.vo.FeedVO">
+        <id column="id" property="id"/>
+        <result column="feed_url" property="feedUrl"/>
+        <result column="feed_name" property="feedName"/>
+        <result column="feed_description" property="feedDescription"/>
+        <result column="feed_link" property="feedLink"/>
+        <result column="feed_category" property="feedCategory"/>
+        <result column="feed_language" property="feedLanguage"/>
+        <result column="feed_image_url" property="feedImageUrl"/>
+        <result column="last_fetch_time" property="lastFetchTime"/>
+        <result column="fetch_interval" property="fetchInterval"/>
+        <result column="status" property="status"/>
+        <result column="fetch_error_count" property="fetchErrorCount"/>
+        <result column="last_error_msg" property="lastErrorMsg"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="unread_count" property="unreadCount"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.rssreader.entity.Feed" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO rss_feed (
+            feed_url, feed_name, feed_description, feed_link,
+            feed_category, feed_language, feed_image_url,
+            fetch_interval, status
+        ) VALUES (
+            #{feedUrl}, #{feedName}, #{feedDescription}, #{feedLink},
+            #{feedCategory}, #{feedLanguage}, #{feedImageUrl},
+            #{fetchInterval}, #{status}
+        )
+    </insert>
+
+    <update id="updateById" parameterType="com.rssreader.entity.Feed">
+        UPDATE rss_feed
+        <set>
+            <if test="feedName != null">feed_name = #{feedName},</if>
+            <if test="feedDescription != null">feed_description = #{feedDescription},</if>
+            <if test="feedLink != null">feed_link = #{feedLink},</if>
+            <if test="feedCategory != null">feed_category = #{feedCategory},</if>
+            <if test="feedLanguage != null">feed_language = #{feedLanguage},</if>
+            <if test="feedImageUrl != null">feed_image_url = #{feedImageUrl},</if>
+            <if test="fetchInterval != null">fetch_interval = #{fetchInterval},</if>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <update id="deleteById">
+        UPDATE rss_feed SET is_deleted = 1 WHERE id = #{id}
+    </update>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM rss_feed WHERE id = #{id} AND is_deleted = 0
+    </select>
+
+    <select id="selectByUrl" resultMap="BaseResultMap">
+        SELECT * FROM rss_feed WHERE feed_url = #{feedUrl} AND is_deleted = 0
+    </select>
+
+    <select id="selectList" resultMap="VOResultMap">
+        SELECT
+            f.*,
+            (SELECT COUNT(*) FROM rss_article a
+             WHERE a.feed_id = f.id AND a.is_read = 0 AND a.is_deleted = 0) AS unread_count
+        FROM rss_feed f
+        WHERE f.is_deleted = 0
+        ORDER BY f.create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="selectCount" resultType="int">
+        SELECT COUNT(*) FROM rss_feed WHERE is_deleted = 0
+    </select>
+
+    <select id="selectAllEnabled" resultMap="BaseResultMap">
+        SELECT * FROM rss_feed WHERE status = 1 AND is_deleted = 0
+    </select>
+
+    <update id="updateLastFetchTime">
+        UPDATE rss_feed SET last_fetch_time = NOW() WHERE id = #{id}
+    </update>
+
+    <update id="updateFetchError">
+        UPDATE rss_feed
+        SET fetch_error_count = fetch_error_count + 1,
+            last_error_msg = #{errorMsg}
+        WHERE id = #{id}
+    </update>
+
+    <update id="resetFetchError">
+        UPDATE rss_feed
+        SET fetch_error_count = 0,
+            last_error_msg = NULL
+        WHERE id = #{id}
+    </update>
+
+</mapper>

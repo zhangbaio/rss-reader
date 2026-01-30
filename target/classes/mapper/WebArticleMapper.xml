@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rssreader.mapper.WebArticleMapper">
+
+    <resultMap id="BaseResultMap" type="com.rssreader.entity.WebArticle">
+        <id column="id" property="id"/>
+        <result column="url" property="url"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+        <result column="content" property="content"/>
+        <result column="author" property="author"/>
+        <result column="domain" property="domain"/>
+        <result column="image_url" property="imageUrl"/>
+        <result column="word_count" property="wordCount"/>
+        <result column="reading_time" property="readingTime"/>
+        <result column="progress" property="progress"/>
+        <result column="category" property="category"/>
+        <result column="language" property="language"/>
+        <result column="is_read" property="isRead"/>
+        <result column="is_favorite" property="isFavorite"/>
+        <result column="saved_time" property="savedTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="is_deleted" property="isDeleted"/>
+    </resultMap>
+
+    <resultMap id="VOResultMap" type="com.rssreader.vo.WebArticleVO">
+        <id column="id" property="id"/>
+        <result column="url" property="url"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+        <result column="content" property="content"/>
+        <result column="author" property="author"/>
+        <result column="domain" property="domain"/>
+        <result column="image_url" property="imageUrl"/>
+        <result column="word_count" property="wordCount"/>
+        <result column="reading_time" property="readingTime"/>
+        <result column="progress" property="progress"/>
+        <result column="category" property="category"/>
+        <result column="language" property="language"/>
+        <result column="is_read" property="isRead"/>
+        <result column="is_favorite" property="isFavorite"/>
+        <result column="saved_time" property="savedTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="highlight_count" property="highlightCount"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.rssreader.entity.WebArticle" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO web_article (
+            url, title, description, content, author, domain, image_url,
+            word_count, reading_time, progress, category, language, saved_time
+        ) VALUES (
+            #{url}, #{title}, #{description}, #{content}, #{author}, #{domain}, #{imageUrl},
+            #{wordCount}, #{readingTime}, #{progress}, #{category}, #{language}, #{savedTime}
+        )
+    </insert>
+
+    <update id="updateById" parameterType="com.rssreader.entity.WebArticle">
+        UPDATE web_article
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="author != null">author = #{author},</if>
+            <if test="imageUrl != null">image_url = #{imageUrl},</if>
+            <if test="wordCount != null">word_count = #{wordCount},</if>
+            <if test="readingTime != null">reading_time = #{readingTime},</if>
+            <if test="progress != null">progress = #{progress},</if>
+            <if test="category != null">category = #{category},</if>
+            <if test="language != null">language = #{language},</if>
+            <if test="isRead != null">is_read = #{isRead},</if>
+            <if test="isFavorite != null">is_favorite = #{isFavorite},</if>
+            update_time = NOW(),
+        </set>
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <update id="deleteById">
+        UPDATE web_article SET is_deleted = 1, update_time = NOW() WHERE id = #{id}
+    </update>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM web_article WHERE id = #{id} AND is_deleted = 0
+    </select>
+
+    <select id="selectVOById" resultMap="VOResultMap">
+        SELECT w.*,
+               (SELECT COUNT(*) FROM article_highlight h WHERE h.article_id = w.id) as highlight_count
+        FROM web_article w
+        WHERE w.id = #{id} AND w.is_deleted = 0
+    </select>
+
+    <select id="selectList" resultMap="VOResultMap">
+        SELECT w.*,
+               (SELECT COUNT(*) FROM article_highlight h WHERE h.article_id = w.id) as highlight_count
+        FROM web_article w
+        WHERE w.is_deleted = 0
+        <if test="category != null and category != ''">
+            AND w.category = #{category}
+        </if>
+        <if test="isRead != null">
+            AND w.is_read = #{isRead}
+        </if>
+        <if test="isFavorite != null">
+            AND w.is_favorite = #{isFavorite}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (w.title LIKE CONCAT('%', #{keyword}, '%')
+                 OR w.description LIKE CONCAT('%', #{keyword}, '%')
+                 OR w.domain LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <choose>
+            <when test="sortBy == 'title'">
+                ORDER BY w.title
+                <if test="sortOrder == 'desc'">DESC</if>
+                <if test="sortOrder != 'desc'">ASC</if>
+            </when>
+            <otherwise>
+                ORDER BY w.saved_time
+                <if test="sortOrder == 'asc'">ASC</if>
+                <if test="sortOrder != 'asc'">DESC</if>
+            </otherwise>
+        </choose>
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="selectCount" resultType="int">
+        SELECT COUNT(*)
+        FROM web_article w
+        WHERE w.is_deleted = 0
+        <if test="category != null and category != ''">
+            AND w.category = #{category}
+        </if>
+        <if test="isRead != null">
+            AND w.is_read = #{isRead}
+        </if>
+        <if test="isFavorite != null">
+            AND w.is_favorite = #{isFavorite}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (w.title LIKE CONCAT('%', #{keyword}, '%')
+                 OR w.description LIKE CONCAT('%', #{keyword}, '%')
+                 OR w.domain LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </select>
+
+    <select id="selectByUrl" resultMap="BaseResultMap">
+        SELECT * FROM web_article WHERE url = #{url} AND is_deleted = 0
+    </select>
+
+    <update id="updateCategory">
+        UPDATE web_article SET category = #{category}, update_time = NOW()
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <update id="updateReadStatus">
+        UPDATE web_article SET is_read = #{isRead}, update_time = NOW()
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <update id="updateFavoriteStatus">
+        UPDATE web_article SET is_favorite = #{isFavorite}, update_time = NOW()
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <update id="updateProgress">
+        UPDATE web_article SET progress = #{progress}, update_time = NOW()
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <select id="selectCountByCategory" resultType="int">
+        SELECT COUNT(*) FROM web_article
+        WHERE is_deleted = 0
+        <if test="category != null and category != ''">
+            AND category = #{category}
+        </if>
+    </select>
+</mapper>

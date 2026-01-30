@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rssreader.mapper.ArticleHighlightMapper">
+
+    <resultMap id="BaseResultMap" type="com.rssreader.entity.ArticleHighlight">
+        <id column="id" property="id"/>
+        <result column="article_id" property="articleId"/>
+        <result column="selected_text" property="selectedText"/>
+        <result column="start_offset" property="startOffset"/>
+        <result column="end_offset" property="endOffset"/>
+        <result column="xpath" property="xpath"/>
+        <result column="color" property="color"/>
+        <result column="note" property="note"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="findByArticleId" resultMap="BaseResultMap">
+        SELECT * FROM article_highlight
+        WHERE article_id = #{articleId}
+        ORDER BY create_time ASC
+    </select>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM article_highlight WHERE id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="com.rssreader.entity.ArticleHighlight" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO article_highlight (article_id, selected_text, start_offset, end_offset, xpath, color, note)
+        VALUES (#{articleId}, #{selectedText}, #{startOffset}, #{endOffset}, #{xpath}, #{color}, #{note})
+    </insert>
+
+    <update id="update" parameterType="com.rssreader.entity.ArticleHighlight">
+        UPDATE article_highlight
+        SET selected_text = #{selectedText},
+            start_offset = #{startOffset},
+            end_offset = #{endOffset},
+            xpath = #{xpath},
+            color = #{color},
+            note = #{note}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM article_highlight WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByArticleId">
+        DELETE FROM article_highlight WHERE article_id = #{articleId}
+    </delete>
+
+</mapper>

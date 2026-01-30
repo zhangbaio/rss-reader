@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rssreader.mapper.ArticleNoteMapper">
+
+    <resultMap id="BaseResultMap" type="com.rssreader.entity.ArticleNote">
+        <id column="id" property="id"/>
+        <result column="article_id" property="articleId"/>
+        <result column="note_content" property="noteContent"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="findByArticleId" resultMap="BaseResultMap">
+        SELECT * FROM article_note WHERE article_id = #{articleId}
+    </select>
+
+    <insert id="insert" parameterType="com.rssreader.entity.ArticleNote" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO article_note (article_id, note_content)
+        VALUES (#{articleId}, #{noteContent})
+    </insert>
+
+    <update id="update" parameterType="com.rssreader.entity.ArticleNote">
+        UPDATE article_note
+        SET note_content = #{noteContent}
+        WHERE article_id = #{articleId}
+    </update>
+
+    <delete id="deleteByArticleId">
+        DELETE FROM article_note WHERE article_id = #{articleId}
+    </delete>
+
+</mapper>

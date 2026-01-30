@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rssreader.mapper.HighlightReviewMapper">
+
+    <resultMap id="BaseResultMap" type="com.rssreader.entity.HighlightReview">
+        <id column="id" property="id"/>
+        <result column="highlight_id" property="highlightId"/>
+        <result column="action" property="action"/>
+        <result column="review_time" property="reviewTime"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <resultMap id="ReviewHighlightResultMap" type="com.rssreader.vo.ReviewHighlightVO">
+        <id column="id" property="id"/>
+        <result column="article_id" property="articleId"/>
+        <result column="selected_text" property="selectedText"/>
+        <result column="start_offset" property="startOffset"/>
+        <result column="end_offset" property="endOffset"/>
+        <result column="xpath" property="xpath"/>
+        <result column="color" property="color"/>
+        <result column="note" property="note"/>
+        <result column="create_time" property="createTime"/>
+        <result column="review_count" property="reviewCount"/>
+        <result column="last_review_time" property="lastReviewTime"/>
+        <result column="mastery_level" property="masteryLevel"/>
+        <association property="article" javaType="com.rssreader.vo.ReviewHighlightVO$ArticleInfoVO">
+            <result column="article_id" property="id"/>
+            <result column="article_title" property="title"/>
+            <result column="article_link" property="link"/>
+            <result column="feed_name" property="feedName"/>
+            <result column="feed_image_url" property="feedImageUrl"/>
+        </association>
+    </resultMap>
+
+    <!-- 获取今日需要复习的高亮列表 -->
+    <select id="findDailyReviewList" resultMap="ReviewHighlightResultMap">
+        SELECT
+            h.id,
+            h.article_id,
+            h.selected_text,
+            h.start_offset,
+            h.end_offset,
+            h.xpath,
+            h.color,
+            h.note,
+            h.create_time,
+            a.title AS article_title,
+            a.link AS article_link,
+            f.feed_name,
+            f.feed_image_url,
+            COALESCE(review_stats.review_count, 0) AS review_count,
+            review_stats.last_review_time,
+            COALESCE(review_stats.mastery_level, 0) AS mastery_level
+        FROM article_highlight h
+        LEFT JOIN rss_article a ON h.article_id = a.id
+        LEFT JOIN rss_feed f ON a.feed_id = f.id
+        LEFT JOIN (
+            SELECT
+                highlight_id,
+                COUNT(*) AS review_count,
+                MAX(review_time) AS last_review_time,
+                CASE
+                    WHEN SUM(CASE WHEN action = 'master' THEN 1 ELSE 0 END) >= 3 THEN 2
+                    WHEN COUNT(*) > 0 THEN 1
+                    ELSE 0
+                END AS mastery_level
+            FROM highlight_review
+            GROUP BY highlight_id
+        ) review_stats ON h.id = review_stats.highlight_id
+        WHERE 1=1
+        <if test="!includeNew">
+            AND COALESCE(review_stats.review_count, 0) > 0
+        </if>
+        <if test="!includeMastered">
+            AND COALESCE(review_stats.mastery_level, 0) &lt; 2
+        </if>
+        ORDER BY
+            COALESCE(review_stats.last_review_time, h.create_time) ASC,
+            h.create_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 获取复习次数 -->
+    <select id="getReviewCountByHighlightId" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM highlight_review WHERE highlight_id = #{highlightId}
+    </select>
+
+    <!-- 获取最后复习时间 -->
+    <select id="getLastReviewTimeByHighlightId" resultType="java.util.Date">
+        SELECT MAX(review_time) FROM highlight_review WHERE highlight_id = #{highlightId}
+    </select>
+
+    <!-- 获取掌握程度 -->
+    <select id="getMasteryLevelByHighlightId" resultType="java.lang.Integer">
+        SELECT
+            CASE
+                WHEN SUM(CASE WHEN action = 'master' THEN 1 ELSE 0 END) >= 3 THEN 2
+                WHEN COUNT(*) > 0 THEN 1
+                ELSE 0
+            END AS mastery_level
+        FROM highlight_review
+        WHERE highlight_id = #{highlightId}
+    </select>
+
+    <!-- 插入复习记录 -->
+    <insert id="insert" parameterType="com.rssreader.entity.HighlightReview" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO highlight_review (highlight_id, action, review_time)
+        VALUES (#{highlightId}, #{action}, #{reviewTime})
+    </insert>
+
+    <!-- 获取今日复习数量 -->
+    <select id="getTodayReviewedCount" resultType="java.lang.Integer">
+        SELECT COUNT(DISTINCT highlight_id)
+        FROM highlight_review
+        WHERE DATE(review_time) = CURDATE()
+    </select>
+
+    <!-- 获取已掌握数量 -->
+    <select id="getMasteredCount" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM (
+            SELECT highlight_id
+            FROM highlight_review
+            GROUP BY highlight_id
+            HAVING SUM(CASE WHEN action = 'master' THEN 1 ELSE 0 END) >= 3
+        ) mastered
+    </select>
+
+    <!-- 获取复习连续天数 -->
+    <select id="getReviewStreak" resultType="java.lang.Integer">
+        SELECT COUNT(DISTINCT DATE(review_time)) AS streak
+        FROM highlight_review
+        WHERE review_time >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+    </select>
+
+    <!-- 获取所有高亮数量 -->
+    <select id="getTotalHighlightsCount" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM article_highlight
+    </select>
+
+</mapper>

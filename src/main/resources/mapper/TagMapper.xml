@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rssreader.mapper.TagMapper">
+
+    <resultMap id="BaseResultMap" type="com.rssreader.entity.Tag">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="color" property="color"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="BaseResultMap">
+        SELECT * FROM tag ORDER BY create_time DESC
+    </select>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM tag WHERE id = #{id}
+    </select>
+
+    <select id="findByName" resultMap="BaseResultMap">
+        SELECT * FROM tag WHERE name = #{name}
+    </select>
+
+    <select id="findByHighlightId" resultMap="BaseResultMap">
+        SELECT t.* FROM tag t
+        INNER JOIN highlight_tag ht ON t.id = ht.tag_id
+        WHERE ht.highlight_id = #{highlightId}
+    </select>
+
+    <insert id="insert" parameterType="com.rssreader.entity.Tag" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tag (name, color)
+        VALUES (#{name}, #{color})
+    </insert>
+
+    <update id="update" parameterType="com.rssreader.entity.Tag">
+        UPDATE tag SET name = #{name}, color = #{color}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM tag WHERE id = #{id}
+    </delete>
+
+    <insert id="insertHighlightTag">
+        INSERT INTO highlight_tag (highlight_id, tag_id)
+        VALUES (#{highlightId}, #{tagId})
+    </insert>
+
+    <delete id="deleteHighlightTags">
+        DELETE FROM highlight_tag WHERE highlight_id = #{highlightId}
+    </delete>
+
+</mapper>

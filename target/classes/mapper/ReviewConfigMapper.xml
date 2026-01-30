@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rssreader.mapper.ReviewConfigMapper">
+
+    <resultMap id="BaseResultMap" type="com.rssreader.entity.ReviewConfig">
+        <id column="id" property="id"/>
+        <result column="daily_count" property="dailyCount"/>
+        <result column="recency" property="recency"/>
+        <result column="include_new" property="includeNew"/>
+        <result column="include_mastered" property="includeMastered"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="findConfig" resultMap="BaseResultMap">
+        SELECT * FROM review_config LIMIT 1
+    </select>
+
+    <insert id="insert" parameterType="com.rssreader.entity.ReviewConfig" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO review_config (daily_count, recency, include_new, include_mastered)
+        VALUES (#{dailyCount}, #{recency}, #{includeNew}, #{includeMastered})
+    </insert>
+
+    <update id="update" parameterType="com.rssreader.entity.ReviewConfig">
+        UPDATE review_config
+        SET daily_count = #{dailyCount},
+            recency = #{recency},
+            include_new = #{includeNew},
+            include_mastered = #{includeMastered}
+        WHERE id = #{id}
+    </update>
+
+</mapper>

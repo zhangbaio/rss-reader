@@ -1,0 +1,27 @@
+-- Web Article table for URL-based articles
+CREATE TABLE IF NOT EXISTS `web_article` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT 'Primary key',
+    `url` VARCHAR(2048) NOT NULL COMMENT 'Original URL',
+    `title` VARCHAR(500) NOT NULL COMMENT 'Article title',
+    `description` TEXT COMMENT 'Article description/summary',
+    `content` LONGTEXT COMMENT 'Full article content (HTML)',
+    `author` VARCHAR(255) COMMENT 'Article author',
+    `domain` VARCHAR(255) COMMENT 'Source domain',
+    `image_url` VARCHAR(2048) COMMENT 'Cover image URL',
+    `word_count` INT DEFAULT 0 COMMENT 'Word count',
+    `reading_time` INT DEFAULT 1 COMMENT 'Estimated reading time in minutes',
+    `progress` INT DEFAULT 0 COMMENT 'Reading progress 0-100',
+    `category` VARCHAR(20) DEFAULT 'inbox' COMMENT 'Category: inbox, later, archive',
+    `language` VARCHAR(10) COMMENT 'Language code (en, zh, etc.)',
+    `is_read` TINYINT DEFAULT 0 COMMENT '0: unread, 1: read',
+    `is_favorite` TINYINT DEFAULT 0 COMMENT '0: not favorite, 1: favorite',
+    `saved_time` DATETIME NOT NULL COMMENT 'Time when article was saved',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Create time',
+    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Update time',
+    `is_deleted` TINYINT DEFAULT 0 COMMENT '0: not deleted, 1: deleted',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_url` (`url`(500)),
+    KEY `idx_category` (`category`),
+    KEY `idx_saved_time` (`saved_time`),
+    KEY `idx_is_deleted` (`is_deleted`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Web articles saved from URLs';

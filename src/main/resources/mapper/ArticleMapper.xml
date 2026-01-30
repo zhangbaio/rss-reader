@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rssreader.mapper.ArticleMapper">
+
+    <resultMap id="BaseResultMap" type="com.rssreader.entity.Article">
+        <id column="id" property="id"/>
+        <result column="feed_id" property="feedId"/>
+        <result column="article_guid" property="articleGuid"/>
+        <result column="title" property="title"/>
+        <result column="link" property="link"/>
+        <result column="description" property="description"/>
+        <result column="author" property="author"/>
+        <result column="pub_date" property="pubDate"/>
+        <result column="category" property="category"/>
+        <result column="enclosure_url" property="enclosureUrl"/>
+        <result column="enclosure_type" property="enclosureType"/>
+        <result column="image_url" property="imageUrl"/>
+        <result column="is_read" property="isRead"/>
+        <result column="is_favorite" property="isFavorite"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="is_deleted" property="isDeleted"/>
+    </resultMap>
+
+    <resultMap id="VOResultMap" type="com.rssreader.vo.ArticleVO">
+        <id column="id" property="id"/>
+        <result column="feed_id" property="feedId"/>
+        <result column="feed_name" property="feedName"/>
+        <result column="feed_image_url" property="feedImageUrl"/>
+        <result column="article_guid" property="articleGuid"/>
+        <result column="title" property="title"/>
+        <result column="link" property="link"/>
+        <result column="description" property="description"/>
+        <result column="author" property="author"/>
+        <result column="pub_date" property="pubDate"/>
+        <result column="category" property="category"/>
+        <result column="enclosure_url" property="enclosureUrl"/>
+        <result column="enclosure_type" property="enclosureType"/>
+        <result column="image_url" property="imageUrl"/>
+        <result column="is_read" property="isRead"/>
+        <result column="is_favorite" property="isFavorite"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.rssreader.entity.Article" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO rss_article (
+            feed_id, article_guid, title, link, description,
+            author, pub_date, category, enclosure_url, enclosure_type, image_url
+        ) VALUES (
+            #{feedId}, #{articleGuid}, #{title}, #{link}, #{description},
+            #{author}, #{pubDate}, #{category}, #{enclosureUrl}, #{enclosureType}, #{imageUrl}
+        )
+    </insert>
+
+    <insert id="batchInsert">
+        INSERT INTO rss_article (
+            feed_id, article_guid, title, link, description,
+            author, pub_date, category, enclosure_url, enclosure_type, image_url
+        ) VALUES
+        <foreach collection="articles" item="item" separator=",">
+            (
+                #{item.feedId}, #{item.articleGuid}, #{item.title}, #{item.link}, #{item.description},
+                #{item.author}, #{item.pubDate}, #{item.category}, #{item.enclosureUrl}, #{item.enclosureType}, #{item.imageUrl}
+            )
+        </foreach>
+    </insert>
+
+    <update id="updateById" parameterType="com.rssreader.entity.Article">
+        UPDATE rss_article
+        <set>
+            <if test="isRead != null">is_read = #{isRead},</if>
+            <if test="isFavorite != null">is_favorite = #{isFavorite},</if>
+        </set>
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <update id="deleteById">
+        UPDATE rss_article SET is_deleted = 1 WHERE id = #{id}
+    </update>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM rss_article WHERE id = #{id} AND is_deleted = 0
+    </select>
+
+    <select id="selectVOById" resultMap="VOResultMap">
+        SELECT a.*, f.feed_name, f.feed_image_url
+        FROM rss_article a
+        LEFT JOIN rss_feed f ON a.feed_id = f.id
+        WHERE a.id = #{id} AND a.is_deleted = 0
+    </select>
+
+    <select id="selectList" resultMap="VOResultMap">
+        SELECT a.*, f.feed_name, f.feed_image_url
+        FROM rss_article a
+        LEFT JOIN rss_feed f ON a.feed_id = f.id
+        WHERE a.is_deleted = 0
+        <if test="feedId != null">
+            AND a.feed_id = #{feedId}
+        </if>
+        <if test="isRead != null">
+            AND a.is_read = #{isRead}
+        </if>
+        <if test="isFavorite != null">
+            AND a.is_favorite = #{isFavorite}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (a.title LIKE CONCAT('%', #{keyword}, '%')
+                 OR a.description LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY a.pub_date DESC, a.create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="selectCount" resultType="int">
+        SELECT COUNT(*)
+        FROM rss_article a
+        WHERE a.is_deleted = 0
+        <if test="feedId != null">
+            AND a.feed_id = #{feedId}
+        </if>
+        <if test="isRead != null">
+            AND a.is_read = #{isRead}
+        </if>
+        <if test="isFavorite != null">
+            AND a.is_favorite = #{isFavorite}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (a.title LIKE CONCAT('%', #{keyword}, '%')
+                 OR a.description LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </select>
+
+    <select id="selectExistingGuids" resultType="string">
+        SELECT article_guid
+        FROM rss_article
+        WHERE feed_id = #{feedId}
+          AND article_guid IN
+        <foreach collection="guids" item="guid" open="(" separator="," close=")">
+            #{guid}
+        </foreach>
+          AND is_deleted = 0
+    </select>
+
+    <update id="updateReadStatus">
+        UPDATE rss_article SET is_read = #{isRead} WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <update id="batchUpdateReadStatus">
+        UPDATE rss_article SET is_read = #{isRead}
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND is_deleted = 0
+    </update>
+
+    <update id="updateFavoriteStatus">
+        UPDATE rss_article SET is_favorite = #{isFavorite} WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <select id="selectUnreadCount" resultType="int">
+        SELECT COUNT(*)
+        FROM rss_article
+        WHERE is_read = 0 AND is_deleted = 0
+        <if test="feedId != null">
+            AND feed_id = #{feedId}
+        </if>
+    </select>
+
+    <select id="selectUnreadCountByFeed" resultType="int">
+        SELECT COUNT(*)
+        FROM rss_article
+        WHERE feed_id = #{feedId} AND is_read = 0 AND is_deleted = 0
+    </select>
+
+
+
+</mapper>

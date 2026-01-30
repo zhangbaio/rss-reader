@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rssreader.mapper.ArticleReviewFrequencyMapper">
+
+    <resultMap id="BaseResultMap" type="com.rssreader.entity.ArticleReviewFrequency">
+        <id column="id" property="id"/>
+        <result column="article_id" property="articleId"/>
+        <result column="frequency" property="frequency"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <resultMap id="ArticleFrequencyResultMap" type="com.rssreader.vo.ArticleFrequencyVO">
+        <result column="article_id" property="articleId"/>
+        <result column="title" property="title"/>
+        <result column="author" property="author"/>
+        <result column="feed_name" property="feedName"/>
+        <result column="feed_image_url" property="feedImageUrl"/>
+        <result column="highlight_count" property="highlightCount"/>
+        <result column="latest_highlight_time" property="latestHighlightTime"/>
+        <result column="frequency" property="frequency"/>
+    </resultMap>
+
+    <!-- 获取有高亮的文章列表 -->
+    <select id="findArticlesWithHighlights" resultMap="ArticleFrequencyResultMap">
+        SELECT
+            a.id AS article_id,
+            a.title,
+            a.author,
+            f.feed_name,
+            f.feed_image_url,
+            COUNT(h.id) AS highlight_count,
+            MAX(h.create_time) AS latest_highlight_time,
+            COALESCE(arf.frequency, 2) AS frequency
+        FROM rss_article a
+        INNER JOIN article_highlight h ON a.id = h.article_id
+        LEFT JOIN rss_feed f ON a.feed_id = f.id
+        LEFT JOIN article_review_frequency arf ON a.id = arf.article_id
+        WHERE 1=1
+        <if test="keyword != null and keyword != ''">
+            AND (a.title LIKE CONCAT('%', #{keyword}, '%')
+                 OR a.author LIKE CONCAT('%', #{keyword}, '%')
+                 OR f.feed_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        GROUP BY a.id, a.title, a.author, f.feed_name, f.feed_image_url, arf.frequency
+        ORDER BY latest_highlight_time DESC
+    </select>
+
+    <!-- 根据文章ID获取频率设置 -->
+    <select id="findByArticleId" resultMap="BaseResultMap">
+        SELECT * FROM article_review_frequency WHERE article_id = #{articleId}
+    </select>
+
+    <!-- 插入频率设置 -->
+    <insert id="insert" parameterType="com.rssreader.entity.ArticleReviewFrequency" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO article_review_frequency (article_id, frequency)
+        VALUES (#{articleId}, #{frequency})
+    </insert>
+
+    <!-- 更新频率设置 -->
+    <update id="update" parameterType="com.rssreader.entity.ArticleReviewFrequency">
+        UPDATE article_review_frequency
+        SET frequency = #{frequency}
+        WHERE article_id = #{articleId}
+    </update>
+
+    <!-- 批量更新频率设置 -->
+    <update id="batchUpdateFrequency">
+        <foreach collection="articleIds" item="articleId" separator=";">
+            INSERT INTO article_review_frequency (article_id, frequency)
+            VALUES (#{articleId}, #{frequency})
+            ON DUPLICATE KEY UPDATE frequency = #{frequency}
+        </foreach>
+    </update>
+
+</mapper>

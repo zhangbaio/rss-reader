@@ -1,0 +1,140 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: $font-family;
+  font-size: $font-size-base;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  height: 100%;
+}
+
+a {
+  color: $primary-color;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// 滚动条样式
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c0c4cc;
+  border-radius: 3px;
+
+  &:hover {
+    background: #909399;
+  }
+}
+
+// 亮色主题
+.theme-light {
+  --bg-sidebar: #{$bg-sidebar-light};
+  --bg-content: #{$bg-content-light};
+  --text-primary: #{$text-primary-light};
+  --text-secondary: #{$text-secondary-light};
+  --text-muted: #{$text-muted-light};
+  --border-color: #{$border-light};
+  --hover-color: #{$hover-light};
+
+  background-color: $bg-content-light;
+  color: $text-primary-light;
+}
+
+// 深色主题
+.theme-dark {
+  --bg-sidebar: #{$bg-sidebar-dark};
+  --bg-content: #{$bg-content-dark};
+  --text-primary: #{$text-primary-dark};
+  --text-secondary: #{$text-secondary-dark};
+  --text-muted: #{$text-muted-dark};
+  --border-color: #{$border-dark};
+  --hover-color: #{$hover-dark};
+
+  background-color: $bg-content-dark;
+  color: $text-primary-dark;
+
+  ::-webkit-scrollbar-thumb {
+    background: #4a4a4a;
+
+    &:hover {
+      background: #5a5a5a;
+    }
+  }
+}
+
+// 文章内容样式
+.article-content {
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: $border-radius-base;
+  }
+
+  pre {
+    background: var(--bg-sidebar);
+    padding: 16px;
+    border-radius: $border-radius-base;
+    overflow-x: auto;
+  }
+
+  code {
+    font-family: 'Fira Code', 'Consolas', monospace;
+    font-size: 13px;
+  }
+
+  blockquote {
+    border-left: 4px solid $primary-color;
+    padding-left: 16px;
+    margin: 16px 0;
+    color: var(--text-secondary);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    margin: 24px 0 16px;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 16px 0;
+  }
+
+  ul, ol {
+    padding-left: 24px;
+    margin: 16px 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+
+    th, td {
+      border: 1px solid var(--border-color);
+      padding: 8px 12px;
+      text-align: left;
+    }
+
+    th {
+      background: var(--bg-sidebar);
+    }
+  }
+}
